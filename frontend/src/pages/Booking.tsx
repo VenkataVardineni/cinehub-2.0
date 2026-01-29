@@ -31,9 +31,14 @@ const Booking: React.FC = () => {
   useEffect(() => {
     if (selectedShow) {
       setShow(selectedShow);
-      loadBookedSeats();
     }
   }, [selectedShow]);
+
+  useEffect(() => {
+    if (show) {
+      loadBookedSeats();
+    }
+  }, [show, showId]);
 
   const loadShow = async () => {
     try {
@@ -49,9 +54,14 @@ const Booking: React.FC = () => {
   };
 
   const loadBookedSeats = async () => {
-    // In a real app, you'd fetch bookings for this show
-    // For now, we'll simulate with empty set
-    setBookedSeats(new Set());
+    if (!showId) return;
+    try {
+      const data = await showApi.getBookedSeats(showId);
+      setBookedSeats(new Set(data.bookedSeats));
+    } catch (err) {
+      console.error('Failed to load booked seats:', err);
+      setBookedSeats(new Set());
+    }
   };
 
   const handleSeatClick = (seat: Seat) => {
@@ -81,16 +91,39 @@ const Booking: React.FC = () => {
   const handleUserSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const newUser = await userApi.create(userForm);
-      setUser(newUser);
+      setError(null);
+      // This will create a new user or return existing user if email exists
+      const userData = await userApi.create(userForm);
+      setUser(userData);
+      // After user is created/retrieved, proceed to booking if seats are selected
+      if (selectedSeats.length > 0 && show) {
+        await handleBookingSubmit(userData);
+      }
     } catch (err: any) {
-      setError(err.message || 'Failed to create user');
+      let errorMessage = 'Failed to process user information';
+      if (err.response?.data) {
+        if (err.response.data.errors) {
+          // Validation errors
+          errorMessage = err.response.data.errors.map((e: any) => e.msg).join(', ');
+        } else if (err.response.data.error) {
+          // Single error message
+          errorMessage = err.response.data.error;
+        }
+      } else if (err.message) {
+        errorMessage = err.message;
+      }
+      setError(errorMessage);
     }
   };
 
-  const handleBookingSubmit = async () => {
-    if (!user || selectedSeats.length === 0 || !show) {
-      setError('Please select seats and provide user information');
+  const handleBookingSubmit = async (userToUse?: User) => {
+    const currentUser = userToUse || user;
+    if (!currentUser || selectedSeats.length === 0 || !show) {
+      if (!currentUser) {
+        setError('Please enter your details first');
+      } else {
+        setError('Please select seats');
+      }
       return;
     }
 
@@ -98,18 +131,27 @@ const Booking: React.FC = () => {
       setSubmitting(true);
       setError(null);
 
-      await bookingApi.create({
-        userId: user._id,
+      const booking = await bookingApi.create({
+        userId: currentUser._id,
         showId: show._id,
         seats: selectedSeats,
       });
 
-      alert('Booking confirmed! Booking ID will be shown here.');
+      // Navigate to confirmation page with booking ID
       dispatch(clearBooking());
-      navigate('/');
+      navigate(`/booking-confirmation/${booking._id}`);
     } catch (err: any) {
-      setError(err.message || 'Failed to create booking');
-    } finally {
+      let errorMessage = 'Failed to create booking';
+      if (err.response?.data) {
+        if (err.response.data.error) {
+          errorMessage = err.response.data.error;
+        } else if (err.response.data.errors) {
+          errorMessage = err.response.data.errors.map((e: any) => e.msg).join(', ');
+        }
+      } else if (err.message) {
+        errorMessage = err.message;
+      }
+      setError(errorMessage);
       setSubmitting(false);
     }
   };
@@ -184,6 +226,7 @@ const Booking: React.FC = () => {
         {!user ? (
           <div className="booking-summary">
             <h3>Enter Your Details</h3>
+            {error && <div className="error" style={{ marginBottom: '15px' }}>{error}</div>}
             <form onSubmit={handleUserSubmit}>
               <div style={{ marginBottom: '15px' }}>
                 <input
@@ -215,8 +258,8 @@ const Booking: React.FC = () => {
                   required
                 />
               </div>
-              <button type="submit" className="btn btn-primary">
-                Continue
+              <button type="submit" className="btn btn-primary" disabled={selectedSeats.length === 0}>
+                {selectedSeats.length === 0 ? 'Select Seats First' : 'Continue to Booking'}
               </button>
             </form>
           </div>
@@ -243,9 +286,13 @@ const Booking: React.FC = () => {
                 <span>₹{totalAmount}</span>
               </div>
             </div>
-            {error && <div className="error" style={{ marginTop: '15px' }}>{error}</div>}
+            {error && (
+              <div className="error" style={{ marginTop: '15px', marginBottom: '15px' }}>
+                {error}
+              </div>
+            )}
             <button
-              onClick={handleBookingSubmit}
+              onClick={() => handleBookingSubmit()}
               disabled={selectedSeats.length === 0 || submitting}
               className="btn btn-primary"
               style={{ width: '100%', marginTop: '20px' }}

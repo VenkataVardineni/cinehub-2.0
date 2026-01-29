@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { movieApi } from '../services/api';
@@ -12,10 +12,17 @@ const MovieList: React.FC = () => {
   const { movies, filters } = useAppSelector((state) => state.movies);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [searchInput, setSearchInput] = useState(filters.search || '');
+  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     loadMovies();
   }, [filters]);
+
+  // Sync search input with filters when filters change externally
+  useEffect(() => {
+    setSearchInput(filters.search || '');
+  }, [filters.search]);
 
   const loadMovies = async () => {
     try {
@@ -34,13 +41,32 @@ const MovieList: React.FC = () => {
     dispatch(setFilters({ ...filters, [key]: value || undefined }));
   };
 
+  const handleSearchChange = (value: string) => {
+    setSearchInput(value);
+    
+    // Clear existing timeout
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
+    }
+    
+    // Debounce search - update filter after 500ms of no typing
+    searchTimeoutRef.current = setTimeout(() => {
+      handleFilterChange('search', value);
+    }, 500);
+  };
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
+      }
+    };
+  }, []);
+
   const handleMovieClick = (movieId: string) => {
     navigate(`/movie/${movieId}`);
   };
-
-  if (loading) {
-    return <div className="loading">Loading movies...</div>;
-  }
 
   return (
     <div className="container">
@@ -50,8 +76,8 @@ const MovieList: React.FC = () => {
           type="text"
           placeholder="Search movies..."
           className="filter-input"
-          value={filters.search || ''}
-          onChange={(e) => handleFilterChange('search', e.target.value)}
+          value={searchInput}
+          onChange={(e) => handleSearchChange(e.target.value)}
         />
         <select
           className="filter-select"
@@ -71,17 +97,24 @@ const MovieList: React.FC = () => {
         >
           <option value="">All Genres</option>
           <option value="Action">Action</option>
+          <option value="Adventure">Adventure</option>
           <option value="Comedy">Comedy</option>
+          <option value="Crime">Crime</option>
           <option value="Drama">Drama</option>
-          <option value="Thriller">Thriller</option>
-          <option value="Romance">Romance</option>
           <option value="Horror">Horror</option>
+          <option value="Musical">Musical</option>
+          <option value="Mystery">Mystery</option>
+          <option value="Romance">Romance</option>
+          <option value="Sci-Fi">Sci-Fi</option>
+          <option value="Thriller">Thriller</option>
         </select>
       </div>
 
       {error && <div className="error">{error}</div>}
 
-      {movies.length === 0 ? (
+      {loading && movies.length === 0 ? (
+        <div className="loading">Loading movies...</div>
+      ) : movies.length === 0 ? (
         <div className="loading">No movies found</div>
       ) : (
         <div className="movie-grid">
@@ -91,7 +124,14 @@ const MovieList: React.FC = () => {
               className="movie-card"
               onClick={() => handleMovieClick(movie._id)}
             >
-              <img src={movie.posterUrl} alt={movie.title} />
+              <img 
+                src={movie.posterUrl} 
+                alt={movie.title}
+                onError={(e) => {
+                  const target = e.target as HTMLImageElement;
+                  target.src = `https://picsum.photos/300/450?random=${movie._id}`;
+                }}
+              />
               <div className="movie-card-content">
                 <h3>{movie.title}</h3>
                 <p>{movie.genre.join(', ')}</p>

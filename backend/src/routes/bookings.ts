@@ -95,13 +95,13 @@ router.post(
         return res.status(400).json({ error: 'Not enough seats available' });
       }
 
-      // Create booking
+      // Create booking with confirmed status
       const booking = new Booking({
         user: userId,
         show: showId,
         seats,
         totalAmount,
-        status: 'pending',
+        status: 'confirmed', // Changed to confirmed immediately
         expiresAt: new Date(Date.now() + 15 * 60 * 1000), // 15 minutes
       });
 

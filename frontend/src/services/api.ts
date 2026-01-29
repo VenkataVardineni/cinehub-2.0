@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { Movie, Show, Booking, User } from '../types';
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5001/api';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -30,6 +30,10 @@ export const showApi = {
   },
   getById: async (id: string) => {
     const response = await api.get<Show>(`/shows/${id}`);
+    return response.data;
+  },
+  getBookedSeats: async (showId: string) => {
+    const response = await api.get<{ bookedSeats: string[] }>(`/shows/${showId}/booked-seats`);
     return response.data;
   },
 };

@@ -47,7 +47,7 @@ export interface SeatSelection {
 
 export interface Booking {
   _id: string;
-  user: string;
+  user: User | string;
   show: Show | string;
   seats: SeatSelection[];
   totalAmount: number;

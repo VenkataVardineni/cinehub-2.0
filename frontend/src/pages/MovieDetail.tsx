@@ -82,7 +82,14 @@ const MovieDetail: React.FC = () => {
       <div className="movie-detail">
         <div className="movie-detail-header">
           <div className="movie-detail-poster">
-            <img src={movie.posterUrl} alt={movie.title} />
+            <img 
+              src={movie.posterUrl} 
+              alt={movie.title}
+              onError={(e) => {
+                const target = e.target as HTMLImageElement;
+                target.src = `https://picsum.photos/300/450?random=${movie._id}`;
+              }}
+            />
           </div>
           <div className="movie-detail-info">
             <h1>{movie.title}</h1>

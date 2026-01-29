@@ -1,6 +1,7 @@
 import express, { Request, Response } from 'express';
 import Show from '../models/Show';
 import Movie from '../models/Movie';
+import Booking from '../models/Booking';
 
 const router = express.Router();
 
@@ -50,5 +51,27 @@ router.get('/:id', async (req: Request, res: Response) => {
   }
 });
 
-export default router;
+// Get booked seats for a show
+router.get('/:id/booked-seats', async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    
+    const bookings = await Booking.find({
+      show: id,
+      status: { $in: ['pending', 'confirmed'] },
+    });
 
+    const bookedSeats = new Set<string>();
+    bookings.forEach((booking) => {
+      booking.seats.forEach((seat) => {
+        bookedSeats.add(`${seat.row}-${seat.number}`);
+      });
+    });
+
+    res.json({ bookedSeats: Array.from(bookedSeats) });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+export default router;
