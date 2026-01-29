@@ -59,13 +59,18 @@ cp .env.example .env
 
 4. Update `.env` with your MongoDB connection string and other configurations.
 
-5. Start MongoDB using Docker:
+5. (Optional) Seed the database with sample data:
+```bash
+npm run seed
+```
+
+6. Start MongoDB using Docker:
 ```bash
 cd ../infra
 docker-compose up -d mongodb
 ```
 
-6. Start the backend server:
+7. Start the backend server:
 ```bash
 cd ../backend
 npm run dev
@@ -85,7 +90,12 @@ cd frontend
 npm install
 ```
 
-3. Start the development server:
+3. Copy environment file (optional):
+```bash
+cp .env.example .env
+```
+
+4. Start the development server:
 ```bash
 npm start
 ```
