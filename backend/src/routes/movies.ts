@@ -8,7 +8,7 @@ const router = express.Router();
 router.get(
   '/',
   asyncHandler(async (req: Request, res: Response) => {
-    const { genre, language, search } = req.query;
+    const { genre, language, search, page: pageRaw, limit: limitRaw } = req.query;
     const query: Record<string, unknown> = { isActive: true };
 
     if (genre) {
@@ -26,8 +26,24 @@ router.get(
       ];
     }
 
-    const movies = await Movie.find(query).sort({ releaseDate: -1 });
-    res.json(movies);
+    const page = Math.max(1, parseInt(String(pageRaw ?? '1'), 10) || 1);
+    const limit = Math.min(48, Math.max(1, parseInt(String(limitRaw ?? '12'), 10) || 12));
+    const skip = (page - 1) * limit;
+
+    const [total, movies] = await Promise.all([
+      Movie.countDocuments(query),
+      Movie.find(query).sort({ releaseDate: -1 }).skip(skip).limit(limit),
+    ]);
+
+    const totalPages = Math.max(1, Math.ceil(total / limit));
+
+    res.json({
+      data: movies,
+      page,
+      limit,
+      total,
+      totalPages,
+    });
   })
 );
 
