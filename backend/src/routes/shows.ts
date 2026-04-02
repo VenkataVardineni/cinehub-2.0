@@ -1,17 +1,18 @@
 import express, { Request, Response } from 'express';
 import Show from '../models/Show';
-import Movie from '../models/Movie';
 import Booking from '../models/Booking';
+import { asyncHandler } from '../utils/asyncHandler';
+import { AppError } from '../utils/AppError';
 
 const router = express.Router();
 
-// Get shows for a specific movie
-router.get('/movie/:movieId', async (req: Request, res: Response) => {
-  try {
+router.get(
+  '/movie/:movieId',
+  asyncHandler(async (req: Request, res: Response) => {
     const { movieId } = req.params;
     const { date } = req.query;
 
-    const query: any = {
+    const query: Record<string, unknown> = {
       movie: movieId,
       isActive: true,
       showTime: { $gte: new Date() },
@@ -30,32 +31,28 @@ router.get('/movie/:movieId', async (req: Request, res: Response) => {
       .sort({ showTime: 1 });
 
     res.json(shows);
-  } catch (error: any) {
-    res.status(500).json({ error: error.message });
-  }
-});
+  })
+);
 
-// Get show by ID
-router.get('/:id', async (req: Request, res: Response) => {
-  try {
+router.get(
+  '/:id',
+  asyncHandler(async (req: Request, res: Response) => {
     const show = await Show.findById(req.params.id).populate(
       'movie',
       'title posterUrl duration description genre'
     );
     if (!show) {
-      return res.status(404).json({ error: 'Show not found' });
+      throw new AppError('Show not found', 404);
     }
     res.json(show);
-  } catch (error: any) {
-    res.status(500).json({ error: error.message });
-  }
-});
+  })
+);
 
-// Get booked seats for a show
-router.get('/:id/booked-seats', async (req: Request, res: Response) => {
-  try {
+router.get(
+  '/:id/booked-seats',
+  asyncHandler(async (req: Request, res: Response) => {
     const { id } = req.params;
-    
+
     const bookings = await Booking.find({
       show: id,
       status: { $in: ['pending', 'confirmed'] },
@@ -69,9 +66,7 @@ router.get('/:id/booked-seats', async (req: Request, res: Response) => {
     });
 
     res.json({ bookedSeats: Array.from(bookedSeats) });
-  } catch (error: any) {
-    res.status(500).json({ error: error.message });
-  }
-});
+  })
+);
 
 export default router;
