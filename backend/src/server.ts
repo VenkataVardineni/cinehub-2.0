@@ -53,9 +53,15 @@ app.use('/api/shows', showRoutes);
 app.use('/api/bookings', bookingRoutes);
 app.use('/api/users', userRoutes);
 
-// Health check
-app.get('/health', (req, res) => {
-  res.json({ status: 'OK', message: 'CineHub API is running' });
+app.get('/health', (_req, res) => {
+  const dbState = mongoose.connection.readyState;
+  const dbOk = dbState === 1;
+  res.status(dbOk ? 200 : 503).json({
+    status: dbOk ? 'OK' : 'DEGRADED',
+    message: 'CineHub API',
+    database: dbOk ? 'connected' : mongoose.STATES[dbState] ?? 'disconnected',
+    uptime: process.uptime(),
+  });
 });
 
 app.use(errorHandler);
