@@ -1,13 +1,15 @@
 import express, { Request, Response } from 'express';
 import Movie from '../models/Movie';
+import { asyncHandler } from '../utils/asyncHandler';
+import { AppError } from '../utils/AppError';
 
 const router = express.Router();
 
-// Get all movies with optional filters
-router.get('/', async (req: Request, res: Response) => {
-  try {
+router.get(
+  '/',
+  asyncHandler(async (req: Request, res: Response) => {
     const { genre, language, search } = req.query;
-    const query: any = { isActive: true };
+    const query: Record<string, unknown> = { isActive: true };
 
     if (genre) {
       query.genre = { $in: Array.isArray(genre) ? genre : [genre] };
@@ -26,23 +28,18 @@ router.get('/', async (req: Request, res: Response) => {
 
     const movies = await Movie.find(query).sort({ releaseDate: -1 });
     res.json(movies);
-  } catch (error: any) {
-    res.status(500).json({ error: error.message });
-  }
-});
+  })
+);
 
-// Get movie by ID
-router.get('/:id', async (req: Request, res: Response) => {
-  try {
+router.get(
+  '/:id',
+  asyncHandler(async (req: Request, res: Response) => {
     const movie = await Movie.findById(req.params.id);
     if (!movie) {
-      return res.status(404).json({ error: 'Movie not found' });
+      throw new AppError('Movie not found', 404);
     }
     res.json(movie);
-  } catch (error: any) {
-    res.status(500).json({ error: error.message });
-  }
-});
+  })
+);
 
 export default router;
-
