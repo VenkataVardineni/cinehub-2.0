@@ -11,6 +11,7 @@ const Booking: React.FC = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const { selectedShow, selectedSeats, totalAmount } = useAppSelector((state) => state.booking);
+  const authUser = useAppSelector((state) => state.auth.user);
   const [show, setShow] = useState<Show | null>(null);
   const [bookedSeats, setBookedSeats] = useState<Set<string>>(new Set());
   const [user, setUser] = useState<User | null>(null);
@@ -27,6 +28,16 @@ const Booking: React.FC = () => {
       dispatch(clearBooking());
     };
   }, [showId]);
+
+  useEffect(() => {
+    if (authUser) {
+      setUserForm({
+        name: authUser.name,
+        email: authUser.email,
+        phone: authUser.phone,
+      });
+    }
+  }, [authUser]);
 
   useEffect(() => {
     if (selectedShow) {

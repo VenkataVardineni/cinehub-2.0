@@ -127,6 +127,7 @@ const MovieList: React.FC = () => {
       ) : movies.length === 0 ? (
         <div className="loading">No movies found</div>
       ) : (
+        <>
         <div className="movie-grid">
           {movies.map((movie) => (
             <div
@@ -151,6 +152,31 @@ const MovieList: React.FC = () => {
             </div>
           ))}
         </div>
+        {totalPages > 1 && (
+          <div className="pagination" role="navigation" aria-label="Movie pages">
+            <button
+              type="button"
+              className="btn pagination-btn"
+              disabled={page <= 1 || loading}
+              onClick={() => dispatch(setPage(page - 1))}
+            >
+              Previous
+            </button>
+            <span className="pagination-info">
+              Page {page} of {totalPages}
+              <span className="pagination-total"> ({total} movies)</span>
+            </span>
+            <button
+              type="button"
+              className="btn pagination-btn"
+              disabled={page >= totalPages || loading}
+              onClick={() => dispatch(setPage(page + 1))}
+            >
+              Next
+            </button>
+          </div>
+        )}
+        </>
       )}
     </div>
   );
