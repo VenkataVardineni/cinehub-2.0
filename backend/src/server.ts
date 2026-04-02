@@ -10,6 +10,7 @@ import showRoutes from './routes/shows';
 import bookingRoutes from './routes/bookings';
 import userRoutes from './routes/users';
 import { errorHandler } from './middleware/errorHandler';
+import { notFoundHandler } from './middleware/notFound';
 
 dotenv.config();
 
@@ -63,6 +64,8 @@ app.get('/health', (_req, res) => {
     uptime: process.uptime(),
   });
 });
+
+app.use(notFoundHandler);
 
 app.use(errorHandler);
 
