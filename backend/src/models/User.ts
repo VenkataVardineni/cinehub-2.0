@@ -5,6 +5,7 @@ export interface IUser extends Document {
   email: string;
   phone: string;
   role: 'user' | 'admin';
+  passwordHash?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -31,6 +32,10 @@ const UserSchema: Schema = new Schema(
       type: String,
       enum: ['user', 'admin'],
       default: 'user',
+    },
+    passwordHash: {
+      type: String,
+      select: false,
     },
   },
   {
