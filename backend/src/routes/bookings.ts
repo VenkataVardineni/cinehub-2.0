@@ -2,10 +2,11 @@ import express, { Request, Response } from 'express';
 import Booking from '../models/Booking';
 import Show from '../models/Show';
 import { body, validationResult } from 'express-validator';
+import { asyncHandler } from '../utils/asyncHandler';
+import { AppError } from '../utils/AppError';
 
 const router = express.Router();
 
-// Create a new booking with seat lock logic
 router.post(
   '/',
   [
@@ -13,118 +14,107 @@ router.post(
     body('showId').notEmpty().withMessage('Show ID is required'),
     body('seats').isArray({ min: 1 }).withMessage('At least one seat is required'),
   ],
-  async (req: Request, res: Response) => {
-    try {
-      const errors = validationResult(req);
-      if (!errors.isEmpty()) {
-        return res.status(400).json({ errors: errors.array() });
-      }
-
-      const { userId, showId, seats } = req.body;
-
-      // Get the show
-      const show = await Show.findById(showId);
-      if (!show) {
-        return res.status(404).json({ error: 'Show not found' });
-      }
-
-      // Check if show is active
-      if (!show.isActive) {
-        return res.status(400).json({ error: 'Show is not active' });
-      }
-
-      // Check if show time has passed
-      if (new Date(show.showTime) < new Date()) {
-        return res.status(400).json({ error: 'Show time has passed' });
-      }
-
-      // Check for existing bookings for the same seats
-      const existingBookings = await Booking.find({
-        show: showId,
-        status: { $in: ['pending', 'confirmed'] },
-      });
-
-      const bookedSeats = new Set<string>();
-      existingBookings.forEach((booking) => {
-        booking.seats.forEach((seat) => {
-          bookedSeats.add(`${seat.row}-${seat.number}`);
-        });
-      });
-
-      // Validate seats and calculate total amount
-      let totalAmount = 0;
-      const seatMap = show.seatMap;
-
-      for (const seatSelection of seats) {
-        const seatKey = `${seatSelection.row}-${seatSelection.number}`;
-
-        // Check if seat is already booked
-        if (bookedSeats.has(seatKey)) {
-          return res.status(400).json({
-            error: `Seat ${seatSelection.row}${seatSelection.number} is already booked`,
-          });
-        }
-
-        // Find seat in seat map and validate
-        let seatFound = false;
-        for (const row of seatMap) {
-          const seat = row.find(
-            (s) => s.row === seatSelection.row && s.number === seatSelection.number
-          );
-          if (seat) {
-            seatFound = true;
-            if (seat.type !== seatSelection.type) {
-              return res.status(400).json({
-                error: `Seat type mismatch for ${seatSelection.row}${seatSelection.number}`,
-              });
-            }
-            totalAmount += seat.price;
-            break;
-          }
-        }
-
-        if (!seatFound) {
-          return res.status(400).json({
-            error: `Seat ${seatSelection.row}${seatSelection.number} not found`,
-          });
-        }
-      }
-
-      // Check if enough seats are available
-      if (show.availableSeats < seats.length) {
-        return res.status(400).json({ error: 'Not enough seats available' });
-      }
-
-      // Create booking with confirmed status
-      const booking = new Booking({
-        user: userId,
-        show: showId,
-        seats,
-        totalAmount,
-        status: 'confirmed', // Changed to confirmed immediately
-        expiresAt: new Date(Date.now() + 15 * 60 * 1000), // 15 minutes
-      });
-
-      await booking.save();
-
-      // Update available seats count
-      show.availableSeats -= seats.length;
-      await show.save();
-
-      const populatedBooking = await Booking.findById(booking._id)
-        .populate('user', 'name email')
-        .populate('show', 'showTime screen');
-
-      res.status(201).json(populatedBooking);
-    } catch (error: any) {
-      res.status(500).json({ error: error.message });
+  asyncHandler(async (req: Request, res: Response) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
     }
-  }
+
+    const { userId, showId, seats } = req.body;
+
+    const show = await Show.findById(showId);
+    if (!show) {
+      throw new AppError('Show not found', 404);
+    }
+
+    if (!show.isActive) {
+      throw new AppError('Show is not active', 400);
+    }
+
+    if (new Date(show.showTime) < new Date()) {
+      throw new AppError('Show time has passed', 400);
+    }
+
+    const existingBookings = await Booking.find({
+      show: showId,
+      status: { $in: ['pending', 'confirmed'] },
+    });
+
+    const bookedSeats = new Set<string>();
+    existingBookings.forEach((booking) => {
+      booking.seats.forEach((seat) => {
+        bookedSeats.add(`${seat.row}-${seat.number}`);
+      });
+    });
+
+    let totalAmount = 0;
+    const seatMap = show.seatMap;
+
+    for (const seatSelection of seats) {
+      const seatKey = `${seatSelection.row}-${seatSelection.number}`;
+
+      if (bookedSeats.has(seatKey)) {
+        throw new AppError(
+          `Seat ${seatSelection.row}${seatSelection.number} is already booked`,
+          400
+        );
+      }
+
+      let seatFound = false;
+      for (const row of seatMap) {
+        const seat = row.find(
+          (s) => s.row === seatSelection.row && s.number === seatSelection.number
+        );
+        if (seat) {
+          seatFound = true;
+          if (seat.type !== seatSelection.type) {
+            throw new AppError(
+              `Seat type mismatch for ${seatSelection.row}${seatSelection.number}`,
+              400
+            );
+          }
+          totalAmount += seat.price;
+          break;
+        }
+      }
+
+      if (!seatFound) {
+        throw new AppError(
+          `Seat ${seatSelection.row}${seatSelection.number} not found`,
+          400
+        );
+      }
+    }
+
+    if (show.availableSeats < seats.length) {
+      throw new AppError('Not enough seats available', 400);
+    }
+
+    const booking = new Booking({
+      user: userId,
+      show: showId,
+      seats,
+      totalAmount,
+      status: 'confirmed',
+      expiresAt: new Date(Date.now() + 15 * 60 * 1000),
+    });
+
+    await booking.save();
+
+    show.availableSeats -= seats.length;
+    await show.save();
+
+    const populatedBooking = await Booking.findById(booking._id)
+      .populate('user', 'name email')
+      .populate('show', 'showTime screen');
+
+    res.status(201).json(populatedBooking);
+  })
 );
 
-// Get booking by ID
-router.get('/:id', async (req: Request, res: Response) => {
-  try {
+router.get(
+  '/:id',
+  asyncHandler(async (req: Request, res: Response) => {
     const booking = await Booking.findById(req.params.id)
       .populate('user', 'name email phone')
       .populate({
@@ -136,14 +126,11 @@ router.get('/:id', async (req: Request, res: Response) => {
       });
 
     if (!booking) {
-      return res.status(404).json({ error: 'Booking not found' });
+      throw new AppError('Booking not found', 404);
     }
 
     res.json(booking);
-  } catch (error: any) {
-    res.status(500).json({ error: error.message });
-  }
-});
+  })
+);
 
 export default router;
-
