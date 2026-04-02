@@ -1,5 +1,8 @@
 import express from 'express';
 import cors from 'cors';
+import helmet from 'helmet';
+import compression from 'compression';
+import rateLimit from 'express-rate-limit';
 import dotenv from 'dotenv';
 import mongoose from 'mongoose';
 import movieRoutes from './routes/movies';
@@ -12,6 +15,17 @@ dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
+
+const apiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 300,
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+app.use(helmet());
+app.use(compression());
+app.use('/api', apiLimiter);
 
 // Middleware
 app.use(cors({
