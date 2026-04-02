@@ -6,6 +6,7 @@ import movieRoutes from './routes/movies';
 import showRoutes from './routes/shows';
 import bookingRoutes from './routes/bookings';
 import userRoutes from './routes/users';
+import { errorHandler } from './middleware/errorHandler';
 
 dotenv.config();
 
@@ -43,11 +44,7 @@ app.get('/health', (req, res) => {
   res.json({ status: 'OK', message: 'CineHub API is running' });
 });
 
-// Error handling middleware
-app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
-  console.error(err.stack);
-  res.status(500).json({ error: 'Something went wrong!' });
-});
+app.use(errorHandler);
 
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
