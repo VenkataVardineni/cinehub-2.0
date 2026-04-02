@@ -10,6 +10,7 @@ import showRoutes from './routes/shows';
 import bookingRoutes from './routes/bookings';
 import userRoutes from './routes/users';
 import statsRoutes from './routes/stats';
+import authRoutes from './routes/auth';
 import { errorHandler } from './middleware/errorHandler';
 import { notFoundHandler } from './middleware/notFound';
 
@@ -55,6 +56,7 @@ app.use('/api/shows', showRoutes);
 app.use('/api/bookings', bookingRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/stats', statsRoutes);
+app.use('/api/auth', authRoutes);
 
 app.get('/health', (_req, res) => {
   const dbState = mongoose.connection.readyState;
