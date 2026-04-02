@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAppDispatch } from '../store/hooks';
 import { movieApi, showApi } from '../services/api';
@@ -19,38 +19,40 @@ const MovieDetail: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (id) {
-      loadMovie();
-    }
-  }, [id]);
-
-  useEffect(() => {
-    if (id && selectedDate) {
-      loadShows();
-    }
-  }, [id, selectedDate]);
-
-  const loadMovie = async () => {
+  const loadMovie = useCallback(async () => {
+    if (!id) return;
     try {
       setLoading(true);
-      const data = await movieApi.getById(id!);
+      const data = await movieApi.getById(id);
       setMovie(data);
     } catch (err: any) {
       setError(err.message || 'Failed to load movie');
     } finally {
       setLoading(false);
     }
-  };
+  }, [id]);
 
-  const loadShows = async () => {
+  const loadShows = useCallback(async () => {
+    if (!id) return;
     try {
-      const data = await showApi.getByMovieId(id!, selectedDate);
+      const data = await showApi.getByMovieId(id, selectedDate);
       setShows(data);
     } catch (err: any) {
       setError(err.message || 'Failed to load shows');
     }
-  };
+  }, [id, selectedDate]);
+
+  useEffect(() => {
+    if (id) {
+      loadMovie();
+    }
+  }, [id, loadMovie]);
+
+  useEffect(() => {
+    if (id && selectedDate) {
+      loadShows();
+    }
+  }, [id, selectedDate, loadShows]);
 
   const handleShowSelect = (show: Show) => {
     setSelectedShowId(show._id);

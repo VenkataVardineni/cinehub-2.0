@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { showApi, bookingApi, userApi } from '../services/api';
@@ -20,6 +20,31 @@ const Booking: React.FC = () => {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const loadShow = useCallback(async () => {
+    if (!showId) return;
+    try {
+      setLoading(true);
+      const data = await showApi.getById(showId);
+      setShow(data);
+      dispatch(setSelectedShow(data));
+    } catch (err: any) {
+      setError(err.message || 'Failed to load show');
+    } finally {
+      setLoading(false);
+    }
+  }, [showId, dispatch]);
+
+  const loadBookedSeats = useCallback(async () => {
+    if (!showId) return;
+    try {
+      const data = await showApi.getBookedSeats(showId);
+      setBookedSeats(new Set(data.bookedSeats));
+    } catch (err) {
+      console.error('Failed to load booked seats:', err);
+      setBookedSeats(new Set());
+    }
+  }, [showId]);
+
   useEffect(() => {
     if (showId) {
       loadShow();
@@ -27,7 +52,7 @@ const Booking: React.FC = () => {
     return () => {
       dispatch(clearBooking());
     };
-  }, [showId]);
+  }, [showId, loadShow, dispatch]);
 
   useEffect(() => {
     if (authUser) {
@@ -49,31 +74,7 @@ const Booking: React.FC = () => {
     if (show) {
       loadBookedSeats();
     }
-  }, [show, showId]);
-
-  const loadShow = async () => {
-    try {
-      setLoading(true);
-      const data = await showApi.getById(showId!);
-      setShow(data);
-      dispatch(setSelectedShow(data));
-    } catch (err: any) {
-      setError(err.message || 'Failed to load show');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const loadBookedSeats = async () => {
-    if (!showId) return;
-    try {
-      const data = await showApi.getBookedSeats(showId);
-      setBookedSeats(new Set(data.bookedSeats));
-    } catch (err) {
-      console.error('Failed to load booked seats:', err);
-      setBookedSeats(new Set());
-    }
-  };
+  }, [show, showId, loadBookedSeats]);
 
   const handleSeatClick = (seat: Seat) => {
     if (isSeatOccupied(seat)) {

@@ -43,10 +43,22 @@ An advanced online movie booking platform built with MERN stack and TypeScript. 
   - Total amount
   - Print ticket option
 
+### Account and history
+- **Register and sign in**: Password-based accounts with JWT sessions (bcrypt-hashed passwords on the server).
+- **My bookings**: Signed-in users can list past confirmed bookings and open ticket details.
+- **Guest checkout**: Booking with name, email, and phone without registering still works as before.
+
+### Platform hardening (API)
+- **Security headers and compression**: Helmet and gzip-style compression on API responses.
+- **Rate limiting**: Per-IP limits on `/api/*` routes to reduce abuse.
+- **Structured errors**: Consistent JSON errors via a centralized handler; invalid MongoDB ids return 400.
+- **Health check**: `/health` reports process uptime and MongoDB connection state.
+
 ### Admin Features (API Ready)
 - **Movie Management**: Add, edit, and manage movies
 - **Show Management**: Create and manage showtimes
 - **Booking Monitoring**: View all bookings and seat availability
+- **Public stats**: `GET /api/stats/summary` returns counts for active movies, upcoming shows, and confirmed bookings
 
 ## 🛠️ Tech Stack
 
@@ -186,7 +198,7 @@ cinehub-2.0/
 ## 🔌 API Endpoints
 
 ### Movies
-- `GET /api/movies` - Get all movies (with optional filters: genre, language, search)
+- `GET /api/movies` - Paginated list (query: `genre`, `language`, `search`, `page`, `limit`; response includes `data`, `page`, `limit`, `total`, `totalPages`)
 - `GET /api/movies/:id` - Get movie by ID
 
 ### Shows
@@ -197,7 +209,16 @@ cinehub-2.0/
 ### Bookings
 - `POST /api/bookings` - Create a new booking
   - Body: `{ userId, showId, seats: [{ row, number, type, price }] }`
+- `GET /api/bookings/me` - List bookings for the signed-in user (header `Authorization: Bearer <token>`)
 - `GET /api/bookings/:id` - Get booking by ID
+
+### Authentication
+- `POST /api/auth/register` - Register with password (body: `name`, `email`, `phone`, `password` min 8 chars); returns `token` and `user`
+- `POST /api/auth/login` - Sign in (body: `email`, `password`); returns `token` and `user`
+- `GET /api/auth/me` - Current user from JWT (`Authorization: Bearer <token>` required)
+
+### Stats
+- `GET /api/stats/summary` - Aggregate counts for the catalog and bookings
 
 ### Users
 - `POST /api/users` - Create or retrieve user by email
@@ -250,10 +271,13 @@ cinehub-2.0/
 - **CORS Configuration**: Properly configured for frontend-backend communication
 - **Seat Conflict Prevention**: Server-side checks prevent double booking
 - **Type Safety**: Full TypeScript implementation
+- **JWT authentication**: Signed tokens for registered users; optional guest flow unchanged
+- **API rate limiting**: Limits requests per IP on `/api` routes
+- **Helmet**: Sets sensible HTTP security headers on API responses
 
 ## 🚧 Future Enhancements
 
-- [ ] User authentication and authorization (JWT)
+- [x] User authentication and authorization (JWT) for registered accounts
 - [ ] Payment gateway integration
 - [ ] Email notifications for bookings
 - [ ] Real-time seat updates using WebSockets

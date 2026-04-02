@@ -1,9 +1,8 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { movieApi } from '../services/api';
 import { setMoviePage, setFilters, setPage } from '../store/slices/movieSlice';
-import { Movie } from '../types';
 import './MovieList.css';
 
 const MovieList: React.FC = () => {
@@ -15,35 +14,38 @@ const MovieList: React.FC = () => {
   const [searchInput, setSearchInput] = useState(filters.search || '');
   const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
+  const loadMovies = useCallback(
+    async (pageNum: number) => {
+      try {
+        setLoading(true);
+        setError(null);
+        const data = await movieApi.getAll({ ...filters, page: pageNum, limit: 12 });
+        dispatch(
+          setMoviePage({
+            movies: data.data,
+            page: data.page,
+            totalPages: data.totalPages,
+            total: data.total,
+            limit: data.limit,
+          })
+        );
+      } catch (err: any) {
+        setError(err.message || 'Failed to load movies');
+      } finally {
+        setLoading(false);
+      }
+    },
+    [dispatch, filters]
+  );
+
   useEffect(() => {
     loadMovies(page);
-  }, [filters, page]);
+  }, [filters, page, loadMovies]);
 
   // Sync search input with filters when filters change externally
   useEffect(() => {
     setSearchInput(filters.search || '');
   }, [filters.search]);
-
-  const loadMovies = async (pageNum: number) => {
-    try {
-      setLoading(true);
-      setError(null);
-      const data = await movieApi.getAll({ ...filters, page: pageNum, limit: 12 });
-      dispatch(
-        setMoviePage({
-          movies: data.data,
-          page: data.page,
-          totalPages: data.totalPages,
-          total: data.total,
-          limit: data.limit,
-        })
-      );
-    } catch (err: any) {
-      setError(err.message || 'Failed to load movies');
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleFilterChange = (key: string, value: string) => {
     dispatch(setPage(1));

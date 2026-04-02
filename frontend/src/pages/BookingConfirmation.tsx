@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { bookingApi } from '../services/api';
-import { Booking, User } from '../types';
+import { Booking } from '../types';
 import './BookingConfirmation.css';
 
 const BookingConfirmation: React.FC = () => {
@@ -11,23 +11,24 @@ const BookingConfirmation: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (bookingId) {
-      loadBooking();
-    }
-  }, [bookingId]);
-
-  const loadBooking = async () => {
+  const loadBooking = useCallback(async () => {
+    if (!bookingId) return;
     try {
       setLoading(true);
-      const data = await bookingApi.getById(bookingId!);
+      const data = await bookingApi.getById(bookingId);
       setBooking(data);
     } catch (err: any) {
       setError(err.message || 'Failed to load booking details');
     } finally {
       setLoading(false);
     }
-  };
+  }, [bookingId]);
+
+  useEffect(() => {
+    if (bookingId) {
+      loadBooking();
+    }
+  }, [bookingId, loadBooking]);
 
   if (loading) {
     return <div className="loading">Loading booking confirmation...</div>;
