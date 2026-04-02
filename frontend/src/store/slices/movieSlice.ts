@@ -9,12 +9,20 @@ interface MovieState {
     language?: string;
     search?: string;
   };
+  page: number;
+  totalPages: number;
+  total: number;
+  limit: number;
 }
 
 const initialState: MovieState = {
   movies: [],
   selectedMovie: null,
   filters: {},
+  page: 1,
+  totalPages: 1,
+  total: 0,
+  limit: 12,
 };
 
 const movieSlice = createSlice({
@@ -23,6 +31,25 @@ const movieSlice = createSlice({
   reducers: {
     setMovies: (state, action: PayloadAction<Movie[]>) => {
       state.movies = action.payload;
+    },
+    setMoviePage: (
+      state,
+      action: PayloadAction<{
+        movies: Movie[];
+        page: number;
+        totalPages: number;
+        total: number;
+        limit: number;
+      }>
+    ) => {
+      state.movies = action.payload.movies;
+      state.page = action.payload.page;
+      state.totalPages = action.payload.totalPages;
+      state.total = action.payload.total;
+      state.limit = action.payload.limit;
+    },
+    setPage: (state, action: PayloadAction<number>) => {
+      state.page = action.payload;
     },
     setSelectedMovie: (state, action: PayloadAction<Movie>) => {
       state.selectedMovie = action.payload;
@@ -33,6 +60,7 @@ const movieSlice = createSlice({
   },
 });
 
-export const { setMovies, setSelectedMovie, setFilters } = movieSlice.actions;
+export const { setMovies, setMoviePage, setPage, setSelectedMovie, setFilters } =
+  movieSlice.actions;
 export default movieSlice.reducer;
 

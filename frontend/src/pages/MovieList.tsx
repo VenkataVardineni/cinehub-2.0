@@ -2,34 +2,42 @@ import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { movieApi } from '../services/api';
-import { setMovies, setFilters } from '../store/slices/movieSlice';
+import { setMoviePage, setFilters, setPage } from '../store/slices/movieSlice';
 import { Movie } from '../types';
 import './MovieList.css';
 
 const MovieList: React.FC = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
-  const { movies, filters } = useAppSelector((state) => state.movies);
+  const { movies, filters, page, totalPages, total } = useAppSelector((state) => state.movies);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchInput, setSearchInput] = useState(filters.search || '');
   const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
-    loadMovies();
-  }, [filters]);
+    loadMovies(page);
+  }, [filters, page]);
 
   // Sync search input with filters when filters change externally
   useEffect(() => {
     setSearchInput(filters.search || '');
   }, [filters.search]);
 
-  const loadMovies = async () => {
+  const loadMovies = async (pageNum: number) => {
     try {
       setLoading(true);
       setError(null);
-      const data = await movieApi.getAll(filters);
-      dispatch(setMovies(data));
+      const data = await movieApi.getAll({ ...filters, page: pageNum, limit: 12 });
+      dispatch(
+        setMoviePage({
+          movies: data.data,
+          page: data.page,
+          totalPages: data.totalPages,
+          total: data.total,
+          limit: data.limit,
+        })
+      );
     } catch (err: any) {
       setError(err.message || 'Failed to load movies');
     } finally {
@@ -38,6 +46,7 @@ const MovieList: React.FC = () => {
   };
 
   const handleFilterChange = (key: string, value: string) => {
+    dispatch(setPage(1));
     dispatch(setFilters({ ...filters, [key]: value || undefined }));
   };
 
@@ -51,7 +60,8 @@ const MovieList: React.FC = () => {
     
     // Debounce search - update filter after 500ms of no typing
     searchTimeoutRef.current = setTimeout(() => {
-      handleFilterChange('search', value);
+      dispatch(setPage(1));
+      dispatch(setFilters({ ...filters, search: value || undefined }));
     }, 500);
   };
 

@@ -64,3 +64,11 @@ export interface User {
   role: 'user' | 'admin';
 }
 
+export interface PaginatedMovies {
+  data: Movie[];
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+}
+
