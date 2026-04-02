@@ -6,6 +6,9 @@ import MovieList from './pages/MovieList';
 import MovieDetail from './pages/MovieDetail';
 import Booking from './pages/Booking';
 import BookingConfirmation from './pages/BookingConfirmation';
+import Login from './pages/Login';
+import Register from './pages/Register';
+import Navbar from './components/Navbar';
 import './App.css';
 
 function App() {
@@ -13,15 +16,17 @@ function App() {
     <Provider store={store}>
       <Router>
         <div className="App">
-          <header className="App-header">
-            <h1>CineHub 2.0</h1>
-          </header>
-          <Routes>
-            <Route path="/" element={<MovieList />} />
-            <Route path="/movie/:id" element={<MovieDetail />} />
-            <Route path="/booking/:showId" element={<Booking />} />
-            <Route path="/booking-confirmation/:bookingId" element={<BookingConfirmation />} />
-          </Routes>
+          <Navbar />
+          <main className="App-main">
+            <Routes>
+              <Route path="/" element={<MovieList />} />
+              <Route path="/movie/:id" element={<MovieDetail />} />
+              <Route path="/booking/:showId" element={<Booking />} />
+              <Route path="/booking-confirmation/:bookingId" element={<BookingConfirmation />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/register" element={<Register />} />
+            </Routes>
+          </main>
         </div>
       </Router>
     </Provider>

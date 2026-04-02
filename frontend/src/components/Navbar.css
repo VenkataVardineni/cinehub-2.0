@@ -1,0 +1,81 @@
+.navbar {
+  background: #1a1d24;
+  color: #fff;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
+}
+
+.navbar-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 14px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.navbar-brand {
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: #fff;
+  text-decoration: none;
+  letter-spacing: -0.02em;
+}
+
+.navbar-brand:hover {
+  color: #e0e0e0;
+}
+
+.navbar-links {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.nav-link {
+  color: #c5cad3;
+  text-decoration: none;
+  font-size: 0.95rem;
+  padding: 6px 10px;
+  border-radius: 6px;
+}
+
+.nav-link:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.nav-link.active {
+  color: #fff;
+  background: rgba(0, 123, 255, 0.25);
+}
+
+.btn-nav {
+  padding: 8px 16px;
+  font-size: 0.9rem;
+}
+
+.btn-nav-outline {
+  padding: 8px 16px;
+  font-size: 0.9rem;
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  background: transparent;
+  color: #fff;
+  cursor: pointer;
+}
+
+.btn-nav-outline:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.navbar-user {
+  font-size: 0.9rem;
+  color: #aeb4bf;
+  max-width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
