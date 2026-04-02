@@ -10,6 +10,7 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import BookingHistory from './pages/BookingHistory';
 import Navbar from './components/Navbar';
+import { ErrorBoundary } from './components/ErrorBoundary';
 import './App.css';
 
 function App() {
@@ -19,6 +20,7 @@ function App() {
         <div className="App">
           <Navbar />
           <main className="App-main">
+            <ErrorBoundary>
             <Routes>
               <Route path="/" element={<MovieList />} />
               <Route path="/movie/:id" element={<MovieDetail />} />
@@ -28,6 +30,7 @@ function App() {
               <Route path="/register" element={<Register />} />
               <Route path="/my-bookings" element={<BookingHistory />} />
             </Routes>
+            </ErrorBoundary>
           </main>
         </div>
       </Router>
