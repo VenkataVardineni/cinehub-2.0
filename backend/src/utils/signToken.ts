@@ -1,4 +1,4 @@
-import jwt from 'jsonwebtoken';
+import jwt, { SignOptions } from 'jsonwebtoken';
 import { AppError } from './AppError';
 
 export interface JwtPayload {
@@ -12,7 +12,7 @@ export function signToken(payload: JwtPayload): string {
   if (!secret) {
     throw new AppError('Authentication is not configured on the server', 500, false);
   }
-  return jwt.sign(payload, secret, {
-    expiresIn: process.env.JWT_EXPIRES_IN || '7d',
-  });
+  const days = parseInt(process.env.JWT_EXPIRES_DAYS ?? '7', 10) || 7;
+  const options: SignOptions = { expiresIn: days * 24 * 60 * 60 };
+  return jwt.sign(payload, secret, options);
 }

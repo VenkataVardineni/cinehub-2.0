@@ -5,6 +5,7 @@ import { body, validationResult } from 'express-validator';
 import { asyncHandler } from '../utils/asyncHandler';
 import { AppError } from '../utils/AppError';
 import { validateObjectId } from '../middleware/validateObjectId';
+import { authenticate } from '../middleware/authenticate';
 
 const router = express.Router();
 
@@ -110,6 +111,25 @@ router.post(
       .populate('show', 'showTime screen');
 
     res.status(201).json(populatedBooking);
+  })
+);
+
+router.get(
+  '/me',
+  authenticate,
+  asyncHandler(async (req: Request, res: Response) => {
+    const bookings = await Booking.find({ user: req.userId })
+      .sort({ bookingDate: -1 })
+      .populate('user', 'name email phone')
+      .populate({
+        path: 'show',
+        populate: {
+          path: 'movie',
+          select: 'title posterUrl duration',
+        },
+      });
+
+    res.json(bookings);
   })
 );
 
