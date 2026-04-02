@@ -8,6 +8,7 @@ import Booking from './pages/Booking';
 import BookingConfirmation from './pages/BookingConfirmation';
 import Login from './pages/Login';
 import Register from './pages/Register';
+import BookingHistory from './pages/BookingHistory';
 import Navbar from './components/Navbar';
 import './App.css';
 
@@ -25,6 +26,7 @@ function App() {
               <Route path="/booking-confirmation/:bookingId" element={<BookingConfirmation />} />
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
+              <Route path="/my-bookings" element={<BookingHistory />} />
             </Routes>
           </main>
         </div>
