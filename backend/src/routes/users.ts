@@ -3,6 +3,7 @@ import User from '../models/User';
 import { body, validationResult } from 'express-validator';
 import { asyncHandler } from '../utils/asyncHandler';
 import { AppError } from '../utils/AppError';
+import { validateObjectId } from '../middleware/validateObjectId';
 
 const router = express.Router();
 
@@ -58,6 +59,7 @@ router.post(
 
 router.get(
   '/:id',
+  validateObjectId('id'),
   asyncHandler(async (req: Request, res: Response) => {
     const user = await User.findById(req.params.id);
     if (!user) {

@@ -2,6 +2,7 @@ import express, { Request, Response } from 'express';
 import Movie from '../models/Movie';
 import { asyncHandler } from '../utils/asyncHandler';
 import { AppError } from '../utils/AppError';
+import { validateObjectId } from '../middleware/validateObjectId';
 
 const router = express.Router();
 
@@ -49,6 +50,7 @@ router.get(
 
 router.get(
   '/:id',
+  validateObjectId('id'),
   asyncHandler(async (req: Request, res: Response) => {
     const movie = await Movie.findById(req.params.id);
     if (!movie) {

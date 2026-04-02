@@ -3,11 +3,13 @@ import Show from '../models/Show';
 import Booking from '../models/Booking';
 import { asyncHandler } from '../utils/asyncHandler';
 import { AppError } from '../utils/AppError';
+import { validateObjectId } from '../middleware/validateObjectId';
 
 const router = express.Router();
 
 router.get(
   '/movie/:movieId',
+  validateObjectId('movieId'),
   asyncHandler(async (req: Request, res: Response) => {
     const { movieId } = req.params;
     const { date } = req.query;
@@ -36,6 +38,7 @@ router.get(
 
 router.get(
   '/:id',
+  validateObjectId('id'),
   asyncHandler(async (req: Request, res: Response) => {
     const show = await Show.findById(req.params.id).populate(
       'movie',
@@ -50,6 +53,7 @@ router.get(
 
 router.get(
   '/:id/booked-seats',
+  validateObjectId('id'),
   asyncHandler(async (req: Request, res: Response) => {
     const { id } = req.params;
 
