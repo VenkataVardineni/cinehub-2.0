@@ -73,5 +73,9 @@ const MovieSchema: Schema = new Schema(
   }
 );
 
+MovieSchema.index({ isActive: 1, releaseDate: -1 });
+MovieSchema.index({ language: 1, isActive: 1 });
+MovieSchema.index({ genre: 1 });
+
 export default mongoose.model<IMovie>('Movie', MovieSchema);
 
